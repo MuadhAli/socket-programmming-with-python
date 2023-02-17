@@ -1,5 +1,6 @@
 from socket import *
 from threading import *
+from tkinter import *
 
 clients = set()
 
@@ -27,10 +28,31 @@ hostSocket.bind((hostIp, portNumber))
 hostSocket.listen()
 print ("Waiting for connection...")
 
+window = Tk()
+window.title("Server: Waiting for connection on " + hostIp + ":" + str(portNumber))
+window.geometry("500x500")
+
+txtMessages = Text(window, width=50)
+txtMessages.pack(fill=BOTH, padx=10, pady=10, expand=True)
+
+scrollbar = Scrollbar(window)
+scrollbar.pack(side=RIGHT, fill=Y)
+txtMessages.config(yscrollcommand=scrollbar.set)
+scrollbar.config(command=txtMessages.yview)
+
+def updateTitle():
+    connectedClients = len(clients)
+    window.title("Server: " + str(connectedClients) + " client(s) connected on " + hostIp + ":" + str(portNumber))
+    window.after(1000, updateTitle)
+
+updateTitle()
 
 while True:
     clientSocket, clientAddress = hostSocket.accept()
     clients.add(clientSocket)
     print ("Connection established with: ", clientAddress[0] + ":" + str(clientAddress[1]))
+    txtMessages.insert(END, "Connection established with: " + clientAddress[0] + ":" + str(clientAddress[1]) + "\n")
     thread = Thread(target=clientThread, args=(clientSocket, clientAddress, ))
     thread.start()
+
+window.mainloop()
